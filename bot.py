@@ -18,6 +18,7 @@ import getpass
 
 # Хранение данных о запросах команды, для антифлуда
 last_start_command = {}
+last_request = {}
 
 # Создание объекта роутера
 form_router = Router()
@@ -31,7 +32,7 @@ mon_height = root.winfo_screenheight()
 logging.basicConfig(level=logging.INFO)
 
 # Объект бота
-TOKEN = 'BOT_TOKEN'
+TOKEN = 'TOKEN_BOT'
 bot = Bot(token=TOKEN)
 
 # Диспетчер + роутер
@@ -193,6 +194,15 @@ async def command_start(message: Message, state: FSMContext) -> None:
 
 @form_router.message(Form.l_name)
 async def process_name(message: Message, state: FSMContext) -> None:
+    if not message.text:
+        await message.answer("Таких фамилий не бывает, врунишка)")
+        return
+    user_id = message.from_user.id
+    if user_id in last_request:
+        if (message.date - last_request[user_id]).seconds < RATE_LIMIT:
+            await message.answer("Будь терпеливее...")
+            return
+    last_request[user_id] = message.date
     await message.answer(
         "Подожди pls минуту, я пришлю файл, открой его браузером...",
         reply_markup=ReplyKeyboardRemove(),
